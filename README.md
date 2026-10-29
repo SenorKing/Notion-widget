@@ -20,18 +20,4 @@ These are fully self-contained HTML files with no build step or external depende
 
 - This project is intentionally lightweight and portable.
 - The visuals are AI-generated and are meant to serve as creative mood pieces rather than production-ready apps.
-- No install step is required.
 
-## Files
-
-```
-Notion-widget/
-├── night-drive.html
-├── sakura-lake.html
-├── study-session.html
-└── README.md
-```
-
-## License
-
-This repository does not currently include a formal license. If you plan to reuse or redistribute these files, check with the repository owner before using them in a public or commercial project.
