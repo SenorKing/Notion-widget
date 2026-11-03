@@ -12,7 +12,8 @@ These are fully self-contained HTML files with no build step or external depende
 | `sakura-lake.html` | A cherry blossom tree that grows itself under a full moon, with drifting petals, fireflies and a mirror lake. | Move the cursor to swirl the petals; click to grow a new tree |
 | `study-session.html` | A cozy late-night coding scene with a coder in headphones, scrolling code and a starry window. | Click to pause |
 | `rainy-study.html` | A detailed anime-style student writing at his desk on a rainy night, with rain sliding down the glass and city bokeh outside. | Click to pause |
-| `quotes.html` | **Daily Fuel**: a motivational quote widget with anime, code, nature and mindset quotes. It opens on a quote of the day. | Click, press Space or use **Next** for a new quote; filter by category, auto-rotate, copy |
+| `quotes.html` | **Daily Fuel**: a motivational quote widget with anime, code, nature and mindset quotes. It opens on a quote of the day. | Click, press Space or use **Next** for a new quote; filter by category or toggle auto-rotation |
+| `tic-tac-toe.html` | A neon Tic-Tac-Toe board with a computer opponent, local 2-player mode, score tracking and celebratory confetti. | Click a square to play; switch modes or reset scores |
 
 ## How to use
 
@@ -30,6 +31,7 @@ Open any `.html` file in a browser.
 Suggested embed heights:
 - Scenes (`night-drive`, `sakura-lake`, `study-session`, `rainy-study`): about 300–500px
 - `quotes.html`: about 260–360px
+- `tic-tac-toe.html`: about 420–520px
 
 ### Customize
 Colors, text, quotes and animation timing all live directly in each file. For example, add your own quotes to the `QUOTES` list in `quotes.html`.
