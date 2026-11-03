@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tic Tac Toe</title>
+<style>
+  :root{
+    --x:#00f0d0; --o:#ff5fd2; --bg1:#0b1033; --bg2:#2a1060; --bg3:#063b4d;
+    --card:#161a3a; --ink:#f2f3ff; --muted:#9aa2d6; --tile:#20264d; --tile2:#2a3163;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    min-height:100%;display:flex;align-items:center;justify-content:center;padding:16px;
+    font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;color:var(--ink);
+    background:linear-gradient(135deg,var(--bg1),var(--bg2) 45%,var(--bg3));
+    background-size:200% 200%;animation:shift 12s ease-in-out infinite alternate;overflow:hidden;
+  }
+  @keyframes shift{to{background-position:100% 100%}}
+
+  .game{width:min(420px,100%);background:var(--card);border-radius:28px;padding:22px 22px 18px;
+    box-shadow:0 0 0 1px rgba(255,255,255,.06) inset,0 30px 70px rgba(0,0,0,.5),0 0 60px -15px var(--o);text-align:center;position:relative}
+  h1{margin:0 0 4px;font-size:clamp(26px,7vw,36px);letter-spacing:.02em}
+  h1 .x{color:var(--x)} h1 .o{color:var(--o)} h1 .t{color:#ffd23f}
+
+  .modes{display:inline-flex;background:var(--tile);border-radius:999px;padding:4px;margin:8px 0 14px;gap:4px}
+  .modes button{border:0;background:transparent;font:inherit;font-weight:700;font-size:14px;color:var(--muted);
+    padding:7px 14px;border-radius:999px;cursor:pointer;transition:.2s}
+  .modes button[aria-pressed="true"]{background:#ffd23f;color:#141830}
+
+  .scores{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+  .score{border-radius:16px;padding:8px 4px;font-weight:700;font-size:13px;color:#0d1030;transition:transform .2s,box-shadow .2s}
+  .score b{display:block;font-size:24px;line-height:1.1}
+  .score.x{background:var(--x)} .score.o{background:var(--o)} .score.d{background:#ffd23f}
+  .score.turn{transform:translateY(-3px);box-shadow:0 0 18px currentColor,0 0 22px var(--glow,transparent)}
+  .score.x.turn{--glow:var(--x)} .score.o.turn{--glow:var(--o)}
+
+  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;position:relative;margin:0 auto;aspect-ratio:1}
+  .cell{border:0;border-radius:18px;background:var(--tile);cursor:pointer;aspect-ratio:1;
+    display:flex;align-items:center;justify-content:center;font:inherit;transition:background .15s,transform .1s;
+    box-shadow:inset 0 -5px 0 rgba(0,0,0,.25)}
+  .cell:hover:not(:disabled){background:var(--tile2);transform:translateY(-2px)}
+  .cell:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+  .cell:disabled{cursor:default}
+  .cell svg{width:62%;height:62%;overflow:visible}
+  .cell.win{animation:pop .5s ease-in-out infinite alternate}
+  .cell.win.x{background:#0f3f45;box-shadow:0 0 22px -4px var(--x)} .cell.win.o{background:#46184a;box-shadow:0 0 22px -4px var(--o)}
+  @keyframes pop{to{transform:scale(1.06)}}
+
+  .mark path,.mark circle{fill:none;stroke-width:14;stroke-linecap:round}
+  .mark.x{filter:drop-shadow(0 0 6px var(--x))} .mark.o{filter:drop-shadow(0 0 6px var(--o))}
+  .mark.x path{stroke:var(--x);stroke-dasharray:120;stroke-dashoffset:120;animation:draw .25s ease-out forwards}
+  .mark.x path:nth-child(2){animation-delay:.12s}
+  .mark.o circle{stroke:var(--o);stroke-dasharray:240;stroke-dashoffset:240;animation:draw .4s ease-out forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+
+  .status{min-height:28px;margin:14px 0 10px;font-weight:700;font-size:18px}
+  .status .x{color:var(--x)} .status .o{color:var(--o)}
+  .actions{display:flex;gap:8px;justify-content:center}
+  .btn{border:0;font:inherit;font-weight:700;font-size:15px;padding:10px 18px;border-radius:14px;cursor:pointer;
+    background:#ffd23f;color:#141830;box-shadow:0 4px 0 #b8901a;transition:transform .1s}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+  .btn.ghost{background:var(--tile2);color:var(--ink);box-shadow:0 4px 0 #11152e}
+
+  #confetti{position:fixed;inset:0;pointer-events:none;width:100%;height:100%}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}.mark *{stroke-dashoffset:0!important}}
+</style>
+</head>
+<body>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<main class="game">
+  <h1><span class="x">Tic</span> <span class="o">Tac</span> <span class="t">Toe</span></h1>
+
+  <div class="modes" role="group" aria-label="Game mode">
+    <button id="mode-cpu" aria-pressed="true">vs Computer</button>
+    <button id="mode-pvp" aria-pressed="false">2 Players</button>
+  </div>
+
+  <div class="scores">
+    <div class="score x" id="sx"><span id="lx">You (X)</span><b id="cx">0</b></div>
+    <div class="score d">Draws<b id="cd">0</b></div>
+    <div class="score o" id="so"><span id="lo">CPU (O)</span><b id="co">0</b></div>
+  </div>
+
+  <div class="board" id="board" role="grid" aria-label="Tic tac toe board"></div>
+
+  <div class="status" id="status" aria-live="polite"></div>
+  <div class="actions">
+    <button class="btn" id="again">New round</button>
+    <button class="btn ghost" id="reset">Reset scores</button>
+  </div>
+</main>
+
+<script>
+(() => {
+  const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  const $ = id => document.getElementById(id);
+  const boardEl = $('board');
+
+  let board, turn, over, vsCpu = true, starter = 'X';
+  const score = { X: 0, O: 0, D: 0 };
+
+  const cells = Array.from({ length: 9 }, (_, i) => {
+    const b = document.createElement('button');
+    b.className = 'cell';
+    b.setAttribute('aria-label', `Cell ${i + 1}, empty`);
+    b.addEventListener('click', () => humanMove(i));
+    boardEl.appendChild(b);
+    return b;
+  });
+
+  const markSVG = p => p === 'X'
+    ? '<svg class="mark x" viewBox="0 0 100 100"><path d="M18 18 L82 82"/><path d="M82 18 L18 82"/></svg>'
+    : '<svg class="mark o" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/></svg>';
+
+  function winner(b) {
+    for (const l of LINES) {
+      const [a, c, d] = l;
+      if (b[a] && b[a] === b[c] && b[a] === b[d]) return { p: b[a], line: l };
+    }
+    return b.every(Boolean) ? { p: 'D' } : null;
+  }
+
+  function newRound() {
+    board = Array(9).fill(null);
+    over = false;
+    turn = starter;
+    starter = starter === 'X' ? 'O' : 'X';   // alternate who goes first
+    cells.forEach((c, i) => {
+      c.innerHTML = ''; c.className = 'cell'; c.disabled = false;
+      c.setAttribute('aria-label', `Cell ${i + 1}, empty`);
+    });
+    render();
+    if (vsCpu && turn === 'O') setTimeout(cpuMove, 450);
+  }
+
+  function place(i, p) {
+    board[i] = p;
+    cells[i].innerHTML = markSVG(p);
+    cells[i].disabled = true;
+    cells[i].setAttribute('aria-label', `Cell ${i + 1}, ${p}`);
+    const w = winner(board);
+    if (w) return finish(w);
+    turn = p === 'X' ? 'O' : 'X';
+    render();
+  }
+
+  function humanMove(i) {
+    if (over || board[i] || (vsCpu && turn === 'O')) return;
+    place(i, turn);
+    if (!over && vsCpu && turn === 'O') {
+      cells.forEach(c => c.disabled = true);
+      setTimeout(() => { cells.forEach((c, k) => c.disabled = !!board[k]); cpuMove(); }, 450);
+    }
+  }
+
+  // Computer: wins or blocks when it can, otherwise plays smart with a little randomness
+  function cpuMove() {
+    if (over) return;
+    const empty = board.map((v, i) => v ? null : i).filter(v => v !== null);
+    const tryFor = p => empty.find(i => { const b = board.slice(); b[i] = p; return winner(b)?.p === p; });
+    let move = tryFor('O');
+    if (move === undefined) move = tryFor('X');
+    if (move === undefined && Math.random() < .8) move = best();
+    if (move === undefined) move = empty[Math.floor(Math.random() * empty.length)];
+    place(move, 'O');
+  }
+  function best() {
+    let bestScore = -Infinity, move;
+    board.forEach((v, i) => {
+      if (v) return;
+      board[i] = 'O';
+      const s = minimax(false, 0);
+      board[i] = null;
+      if (s > bestScore) { bestScore = s; move = i; }
+    });
+    return move;
+  }
+  function minimax(isO, depth) {
+    const w = winner(board);
+    if (w) return w.p === 'O' ? 10 - depth : w.p === 'X' ? depth - 10 : 0;
+    let s = isO ? -Infinity : Infinity;
+    board.forEach((v, i) => {
+      if (v) return;
+      board[i] = isO ? 'O' : 'X';
+      const r = minimax(!isO, depth + 1);
+      board[i] = null;
+      s = isO ? Math.max(s, r) : Math.min(s, r);
+    });
+    return s;
+  }
+
+  function finish(w) {
+    over = true;
+    cells.forEach(c => c.disabled = true);
+    score[w.p]++;
+    if (w.line) {
+      w.line.forEach(i => cells[i].classList.add('win', w.p.toLowerCase()));
+      const human = !vsCpu || w.p === 'X';
+      if (human) confetti(w.p === 'X' ? '#00f0d0' : '#ff5fd2');
+    }
+    render(w);
+  }
+
+  function render(w) {
+    $('cx').textContent = score.X;
+    $('co').textContent = score.O;
+    $('cd').textContent = score.D;
+    $('sx').classList.toggle('turn', !over && turn === 'X');
+    $('so').classList.toggle('turn', !over && turn === 'O');
+    const name = p => vsCpu ? (p === 'X' ? 'You' : 'Computer') : `Player ${p}`;
+    const tag = p => `<span class="${p.toLowerCase()}">${p}</span>`;
+    const s = $('status');
+    if (w) {
+      if (w.p === 'D') s.textContent = "It's a draw! 🤝";
+      else if (vsCpu && w.p === 'O') s.innerHTML = `Computer wins this one ${tag('O')} 🤖`;
+      else s.innerHTML = `${vsCpu ? 'You win' : name(w.p) + ' wins'}! ${tag(w.p)} 🎉`;
+    } else if (vsCpu && turn === 'O') {
+      s.innerHTML = `Computer is thinking… ${tag('O')}`;
+    } else {
+      s.innerHTML = `${vsCpu ? 'Your' : name(turn) + "'s"} turn ${tag(turn)}`;
+    }
+  }
+
+  function setMode(cpu) {
+    vsCpu = cpu;
+    $('mode-cpu').setAttribute('aria-pressed', cpu);
+    $('mode-pvp').setAttribute('aria-pressed', !cpu);
+    $('lx').textContent = cpu ? 'You (X)' : 'Player X';
+    $('lo').textContent = cpu ? 'CPU (O)' : 'Player O';
+    score.X = score.O = score.D = 0;
+    starter = 'X';
+    newRound();
+  }
+  $('mode-cpu').addEventListener('click', () => setMode(true));
+  $('mode-pvp').addEventListener('click', () => setMode(false));
+  $('again').addEventListener('click', newRound);
+  $('reset').addEventListener('click', () => { score.X = score.O = score.D = 0; starter = 'X'; newRound(); });
+
+  // ---------- confetti ----------
+  const cv = $('confetti'), ctx = cv.getContext('2d');
+  let bits = [], running = false;
+  function confetti(main) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const W = cv.width = innerWidth, H = cv.height = innerHeight;
+    const cols = [main, '#ffd23f', '#00f0d0', '#ff5fd2', '#8b7bff'];
+    for (let i = 0; i < 140; i++) bits.push({
+      x: W / 2 + (Math.random() - .5) * 120, y: H / 2,
+      vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4,
+      r: Math.random() * 6.28, vr: (Math.random() - .5) * .3,
+      w: 6 + Math.random() * 6, h: 4 + Math.random() * 4, c: cols[i % cols.length], life: 160
+    });
+    if (!running) { running = true; requestAnimationFrame(tick); }
+  }
+  function tick() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    bits = bits.filter(b => {
+      b.vy += .35; b.vx *= .99; b.x += b.vx; b.y += b.vy; b.r += b.vr; b.life--;
+      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.r);
+      ctx.globalAlpha = Math.min(1, b.life / 40);
+      ctx.fillStyle = b.c; ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      ctx.restore();
+      return b.life > 0 && b.y < cv.height + 20;
+    });
+    if (bits.length) requestAnimationFrame(tick);
+    else { running = false; ctx.clearRect(0, 0, cv.width, cv.height); }
+  }
+
+  newRound();
+})();
+</script>
+</body>
+</html>
