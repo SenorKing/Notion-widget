@@ -12,14 +12,14 @@
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
   body{
-    min-height:100%;display:flex;align-items:center;justify-content:center;padding:16px;
+    min-height:100%;display:flex;align-items:center;justify-content:center;padding:0;
     font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;color:var(--ink);
     background:linear-gradient(135deg,var(--bg1),var(--bg2) 45%,var(--bg3));
     background-size:200% 200%;animation:shift 12s ease-in-out infinite alternate;overflow:hidden;
   }
   @keyframes shift{to{background-position:100% 100%}}
 
-  .game{width:min(420px,100%);background:var(--card);border-radius:28px;padding:22px 22px 18px;
+  .game{width:420px;flex:none;transform-origin:center center;background:var(--card);border-radius:28px;padding:22px 22px 18px;
     box-shadow:0 0 0 1px rgba(255,255,255,.06) inset,0 30px 70px rgba(0,0,0,.5),0 0 60px -15px var(--o);text-align:center;position:relative}
   h1{margin:0 0 4px;font-size:clamp(26px,7vw,36px);letter-spacing:.02em}
   h1 .x{color:var(--x)} h1 .o{color:var(--o)} h1 .t{color:#ffd23f}
@@ -267,7 +267,19 @@
     else { running = false; ctx.clearRect(0, 0, cv.width, cv.height); }
   }
 
+  // ---------- shrink to fit the window ----------
+  const game = document.querySelector('.game');
+  function fit() {
+    game.style.transform = 'none';
+    const pad = Math.min(16, innerWidth * .04, innerHeight * .04);
+    const s = Math.min(1, (innerWidth - pad * 2) / game.offsetWidth, (innerHeight - pad * 2) / game.offsetHeight);
+    game.style.transform = `scale(${Math.max(.2, s)})`;
+  }
+  addEventListener('resize', fit);
+  new ResizeObserver(fit).observe(document.body);
+
   newRound();
+  fit();
 })();
 </script>
 </body>
